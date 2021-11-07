@@ -67,41 +67,41 @@ namespace PlayerScripts
 			
 			
 			
-			// var smoothVelocity = (_body.right * _movementVector.x + _body.forward * _movementVector.y).normalized;
-			// if (_isMovementPressed)
-			// {
-			// 	SpeedGradualAscend(ref smoothVelocity);
-			// }
-			// else
-			// {
-			// 	SpeedGradualDescent(ref smoothVelocity);
-			// }
-			//
-			// _controller.Move(smoothVelocity *
-			//                  (speed * Time.deltaTime));
+			var smoothVelocity = (_body.right * _movementVector.x + _body.forward * _movementVector.y).normalized;
+			if (_isMovementPressed)
+			{
+				SpeedGradualAscend(ref smoothVelocity);
+			}
+			else
+			{
+				SpeedGradualDescent(ref smoothVelocity);
+			}
+			
+			_controller.Move(smoothVelocity *
+			                 (speed * Time.deltaTime));
 		}
 
-		// private void SpeedGradualAscend(ref Vector3 velocity)
-		// {
-		// 	if (_currentAscendingTime >= 1)
-		// 		return;
-		// 	_currentAscendingTime += Time.deltaTime * ascendingSpeed;
-		// 	velocity *= Mathf.Pow(_currentAscendingTime, 2);
-		// 	// velocity *= _currentAscendingTime;
-		// }
-		//
-		// private void SpeedGradualDescent(ref Vector3 velocity)
-		// {
-		// 	if (_currentDescendingTime >= 1)
-		// 	{
-		// 		velocity = Vector3.zero;
-		// 		return;
-		// 	}
-		//
-		// 	_currentDescendingTime += Time.deltaTime * descendingSpeed;
-		// 	velocity *= 1 - Mathf.Pow(_currentDescendingTime, 2);
-		// 	// velocity *= _currentAscendingTime;
-		// }
+		private void SpeedGradualAscend(ref Vector3 velocity)
+		{
+			if (_currentAscendingTime >= 1)
+				return;
+			_currentAscendingTime += Time.deltaTime * ascendingSpeed;
+			velocity *= Mathf.Pow(_currentAscendingTime, 2);
+			// velocity *= _currentAscendingTime;
+		}
+		
+		private void SpeedGradualDescent(ref Vector3 velocity)
+		{
+			if (_currentDescendingTime >= 1)
+			{
+				velocity = Vector3.zero;
+				return;
+			}
+		
+			_currentDescendingTime += Time.deltaTime * descendingSpeed;
+			velocity *= 1 - Mathf.Pow(_currentDescendingTime, 2);
+			// velocity *= _currentAscendingTime;
+		}
 
 
 		public void OnMoveStart(InputValue value)
