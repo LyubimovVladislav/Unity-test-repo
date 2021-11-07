@@ -58,6 +58,7 @@ namespace PlayerScripts
 
 		private void Move()
 		{
+			
 			CalculateMovementInputSmoothing();
 			_controller.Move(_smoothMovement * (speed * Time.deltaTime));
 		}
