@@ -20,6 +20,7 @@ namespace PlayerScripts
 		[SerializeField] private float ascendingSpeed = 1f;
 		[SerializeField] private float descendingSpeed = 1f;
 		[SerializeField] private float speed = 12f;
+		[SerializeField] private float movementSmoothing = 1f;
 		
 
 		private float _currentAscendingTime;
@@ -31,8 +32,8 @@ namespace PlayerScripts
 		private CharacterController _controller;
 		private float _currentSpeed;
 		private bool _isMovementPressed;
-		private Vector2 _movementVector;
-		private Vector2 _smoothMovement;
+		private Vector3 _normalizedMovement;
+		private Vector3 _smoothMovement;
 
 
 		private void Start()
@@ -40,7 +41,6 @@ namespace PlayerScripts
 			_currentSpeed = 0f;
 			_currentAscendingTime = 0f;
 			_currentDescendingTime = 0f;
-			_movementVector = Vector2.zero;
 			_controller = GetComponent<CharacterController>();
 			_camera = GetComponentInChildren<Camera>().transform;
 			_body = transform;
@@ -54,59 +54,26 @@ namespace PlayerScripts
 		private void Update()
 		{
 			Move();
-			// else if (!_movementVector.Equals(Vector2.zero))
-			// {
-			// 	SpeedGradualDescent();
-			// 	Move();
-			// }
 		}
 
 		private void Move()
 		{
-
-			
-			
-			
-			var smoothVelocity = (_body.right * _movementVector.x + _body.forward * _movementVector.y).normalized;
-			if (_isMovementPressed)
-			{
-				SpeedGradualAscend(ref smoothVelocity);
-			}
-			else
-			{
-				SpeedGradualDescent(ref smoothVelocity);
-			}
-			
-			_controller.Move(smoothVelocity *
-			                 (speed * Time.deltaTime));
+			CalculateMovementInputSmoothing();
+			_controller.Move(_smoothMovement * (speed * Time.deltaTime));
 		}
 
-		private void SpeedGradualAscend(ref Vector3 velocity)
+
+		private void CalculateMovementInputSmoothing()
 		{
-			if (_currentAscendingTime >= 1)
-				return;
-			_currentAscendingTime += Time.deltaTime * ascendingSpeed;
-			velocity *= Mathf.Pow(_currentAscendingTime, 2);
-			// velocity *= _currentAscendingTime;
-		}
-		
-		private void SpeedGradualDescent(ref Vector3 velocity)
-		{
-			if (_currentDescendingTime >= 1)
-			{
-				velocity = Vector3.zero;
-				return;
-			}
-		
-			_currentDescendingTime += Time.deltaTime * descendingSpeed;
-			velocity *= 1 - Mathf.Pow(_currentDescendingTime, 2);
-			// velocity *= _currentAscendingTime;
-		}
+        
+			_smoothMovement = Vector3.Lerp(_smoothMovement, _normalizedMovement, Time.deltaTime * movementSmoothing);
 
+		}
 
 		public void OnMoveStart(InputValue value)
-		{
-			_movementVector = value.Get<Vector2>();
+		{ 
+			var rawMovement = value.Get<Vector2>();
+			_normalizedMovement = (_body.right * rawMovement.x + _body.forward * rawMovement.y).normalized;
 			_isMovementPressed = true;
 			_currentDescendingTime = 0f;
 		}
