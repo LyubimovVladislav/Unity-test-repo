@@ -158,18 +158,16 @@ namespace PlayerScripts
 
 		public void OnMoveStart(InputValue value)
 		{
-			// TODO:
-			// добавить скалярнрое? векторное? произведение с rawMovement,
+			// добавить скалярнрое произведение с rawMovement,
 			// если векторы будут противоположны <- -> то тогда надо выставить smothMovement = Vector3.zero
 			// типо гасим полностью сначала скорость(должно пофиксить эффект (наверное))
-			// посмотреть что даёт скалярое с нулевым вектором
+			// хуйня идея
 
 			var rawMovement = value.Get<Vector2>();
 			if (rawMovement == Vector2.zero)
 				return;
 			_normalizedMovement =
 				(_bodyPosition.right * rawMovement.x + _bodyPosition.forward * rawMovement.y).normalized;
-			Debug.Log(_normalizedMovement);
 			_isMovementPressed = true;
 			_currentDecelerationTime = 0f;
 		}
