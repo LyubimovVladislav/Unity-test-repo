@@ -32,7 +32,7 @@ namespace PlayerScripts
 			"Responsible for concavity in following function (deltaTime/speed)^curve" +
 			"If attribute = 1, the function becomes linear")]
 		[SerializeField]
-		private float accelerationCurvePower = 0.2f;
+		private float accelerationCurvePower = 1.7f;
 
 		[Header("Descending of speed values")]
 		[Tooltip(
@@ -46,7 +46,7 @@ namespace PlayerScripts
 			"Responsible for concavity in following function (deltaTime/speed)^curve 1-(deltaTime/speed)^curve" +
 			"If attribute = 1, the function becomes linear")]
 		[SerializeField]
-		private float decelerationCurvePower = 0.2f;
+		private float decelerationCurvePower = 0.5f;
 
 		[Header("Gravity")] [SerializeField] private float gravitationalConstant = -9.81f;
 		[Tooltip("Epsilon")] [SerializeField] private float groundDistance = 0.1f;
