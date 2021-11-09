@@ -41,26 +41,37 @@ namespace PlayerScripts
 		[SerializeField]
 		private float decelerationCurvePower = 0.2f;
 
+		[Header("Gravity")] [SerializeField] private float gravitationalConstant = -9.81f;
+		[Tooltip("Epsilon")] [SerializeField] private float groundDistance = 0.1f;
+		[SerializeField] private LayerMask groundMask;
+		[SerializeField] private Transform groundCheck;
+		[SerializeField] private float jumpHeight = 3f;
 
 		private float _currentAccelerationTime;
 		private float _currentDecelerationTime;
 		private float _yRotation;
 		private float _xRotation;
-		private Transform _camera;
-		private Transform _body;
+		private Transform _cameraPosition;
+		private Transform _bodyPosition;
 		private CharacterController _controller;
 		private bool _isMovementPressed;
 		private Vector3 _normalizedMovement;
 		private Vector3 _smoothMovement;
+		private Vector3 _downwardsVelocity;
+		private bool _isGrounded;
+		private bool _isJumping;
 
 
 		private void Start()
 		{
+			_isJumping = false;
+			_isGrounded = false;
+			_downwardsVelocity = Vector3.zero;
 			_currentAccelerationTime = 0f;
 			_currentDecelerationTime = 0f;
 			_controller = GetComponent<CharacterController>();
-			_camera = GetComponentInChildren<Camera>().transform;
-			_body = transform;
+			_cameraPosition = GetComponentInChildren<Camera>().transform;
+			_bodyPosition = transform;
 			_yRotation = 0f;
 			_xRotation = 0f;
 			Cursor.lockState = CursorLockMode.Locked;
@@ -72,12 +83,25 @@ namespace PlayerScripts
 		{
 			if (_isMovementPressed || !_smoothMovement.Equals(Vector3.zero))
 				Move();
+			
+			_isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+			if (_isGrounded && _downwardsVelocity.y < 0)
+			{
+				_isJumping = false;
+				_downwardsVelocity.y = 0;
+			}
+			else
+			{
+				ApplyGravity();
+			}
 		}
 
-		// TODO: make frame indifferent
-		// private void UpdateFixed()
-		// {
-		// }
+		private void ApplyGravity()
+		{
+			_downwardsVelocity.y += gravitationalConstant * Time.deltaTime;
+			_controller.Move(_downwardsVelocity * Time.deltaTime);
+		}
+
 
 		private void Move()
 		{
@@ -126,7 +150,8 @@ namespace PlayerScripts
 			var rawMovement = value.Get<Vector2>();
 			if (rawMovement == Vector2.zero)
 				return;
-			_normalizedMovement = (_body.right * rawMovement.x + _body.forward * rawMovement.y).normalized;
+			_normalizedMovement =
+				(_bodyPosition.right * rawMovement.x + _bodyPosition.forward * rawMovement.y).normalized;
 			_isMovementPressed = true;
 			_currentDecelerationTime = 0f;
 		}
@@ -143,8 +168,15 @@ namespace PlayerScripts
 			_yRotation += rotation.x * mouseSensitivity;
 			_xRotation -= rotation.y * mouseSensitivity;
 			_xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
-			_camera.transform.localRotation = Quaternion.Euler(_xRotation, 0, 0);
-			_body.rotation = Quaternion.Euler(0, _yRotation, 0);
+			_cameraPosition.transform.localRotation = Quaternion.Euler(_xRotation, 0, 0);
+			_bodyPosition.rotation = Quaternion.Euler(0, _yRotation, 0);
+		}
+
+		public void OnJump(InputValue value)
+		{
+			if (!_isGrounded) return;
+			_downwardsVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravitationalConstant);
+			_isJumping = true;
 		}
 	}
 }
