@@ -17,7 +17,8 @@ namespace PlayerScripts
 		[Header("Keyboard Movement")] [SerializeField]
 		private float speed = 12f;
 
-		[Tooltip("Inversed i.e. less value -> more influence")] [SerializeField] private float smoothingMultiplierInverse = 5f;
+		[Tooltip("Inversed i.e. less value -> more influence")] [SerializeField]
+		private float smoothingMultiplierInverse = 5f;
 
 		[Header("Ascending of speed values")]
 		[Tooltip(
@@ -157,11 +158,18 @@ namespace PlayerScripts
 
 		public void OnMoveStart(InputValue value)
 		{
+			// TODO:
+			// добавить скалярнрое? векторное? произведение с rawMovement,
+			// если векторы будут противоположны <- -> то тогда надо выставить smothMovement = Vector3.zero
+			// типо гасим полностью сначала скорость(должно пофиксить эффект (наверное))
+			// посмотреть что даёт скалярое с нулевым вектором
+
 			var rawMovement = value.Get<Vector2>();
 			if (rawMovement == Vector2.zero)
 				return;
 			_normalizedMovement =
 				(_bodyPosition.right * rawMovement.x + _bodyPosition.forward * rawMovement.y).normalized;
+			Debug.Log(_normalizedMovement);
 			_isMovementPressed = true;
 			_currentDecelerationTime = 0f;
 		}
@@ -180,6 +188,10 @@ namespace PlayerScripts
 			_xRotation = Mathf.Clamp(_xRotation, -90f, 90f);
 			_cameraPosition.transform.localRotation = Quaternion.Euler(_xRotation, 0, 0);
 			_bodyPosition.rotation = Quaternion.Euler(0, _yRotation, 0);
+			if (rotation.x != 0 && _isMovementPressed)
+			{
+				_normalizedMovement = Quaternion.Euler(0, rotation.x * mouseSensitivity, 0) * _normalizedMovement;
+			}
 		}
 
 		public void OnJump(InputValue value)
