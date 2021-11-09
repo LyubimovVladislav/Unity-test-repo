@@ -21,23 +21,29 @@ namespace PlayerScripts
 
 		[Header("Ascending of speed values")]
 		[Tooltip(
-			"The amount of seconds whole initial acceleration takes. Possible values -> [0, inf]\nin function (x/b)^a it is \'b\' attribute")]
+			"The amount of seconds whole initial acceleration takes. Possible values -> [0, inf]" +
+			"Responsible for stretching and shrinking in following function (deltaTime/speed)^curve")]
 		[SerializeField]
 		private float accelerationTime = 0.5f;
 
 		[Tooltip(
-			"The amount of curvature of the function Possible values -> [0, inf]\nin function (x/b)^a it is \'a\' attribute\nwhen a = 1 is linear function y = x/b")]
+			"The amount of curvature of the function Possible values -> [0, inf]" +
+			"Responsible for concavity in following function (deltaTime/speed)^curve" +
+			"If attribute = 1, the function becomes linear")]
 		[SerializeField]
 		private float accelerationCurvePower = 0.2f;
 
 		[Header("Descending of speed values")]
 		[Tooltip(
-			"The amount of seconds whole initial deceleration takes. Possible values -> [0, inf]\nin function 1-(x/b)^a it is \'b\' attribute")]
+			"The amount of seconds whole initial deceleration takes. Possible values -> [0, inf]" +
+			"Responsible for stretching and shrinking in following function 1-(deltaTime/speed)^curve")]
 		[SerializeField]
 		private float decelerationTime = 0.5f;
 
 		[Tooltip(
-			"The amount of curvature of the function Possible values -> [0, inf]\nin function 1-(x/b)^a it is \'a\' attribute\nwhen a = 1 is linear function y = 1-(x/b)")]
+			"The amount of curvature of the function Possible values -> [0, inf]\n" +
+			"Responsible for concavity in following function (deltaTime/speed)^curve 1-(deltaTime/speed)^curve" +
+			"If attribute = 1, the function becomes linear")]
 		[SerializeField]
 		private float decelerationCurvePower = 0.2f;
 
@@ -85,6 +91,9 @@ namespace PlayerScripts
 				Move();
 			
 			_isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+			
+			// TODO: refactor this 'if' statement code into ApplyGravity() or another method
+			// Level of abstraction does not match
 			if (_isGrounded && _downwardsVelocity.y < 0)
 			{
 				_isJumping = false;
