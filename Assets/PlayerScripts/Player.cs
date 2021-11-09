@@ -13,24 +13,40 @@ namespace PlayerScripts
 		[Header("Mouse movement")] [SerializeField]
 		private float mouseSensitivity = 0.1f;
 
-		[Header("Keyboard Movement")] [SerializeField]
-		private float dragPower = 0.9f;
-
-		[SerializeField] private float epsilon = 0.01f;
-		[SerializeField] private float ascendingSpeed = 1f;
-		[SerializeField] private float descendingSpeed = 1f;
+		[Header("Keyboard Movement")] 
 		[SerializeField] private float speed = 12f;
-		[SerializeField] private float movementSmoothing = 1f;
-		
+		[SerializeField] private float inverseSmoothingMultiplier = 5f;
 
-		private float _currentAscendingTime;
-		private float _currentDescendingTime;
+		[Header("Ascending of speed values")]
+		[Tooltip(
+			"The amount of seconds whole initial acceleration takes. Possible values -> [0, inf]\nin function (x/b)^a it is \'b\' attribute")]
+		[SerializeField]
+		private float accelerationTime = 0.5f;
+
+		[Tooltip(
+			"The amount of curvature of the function Possible values -> [0, inf]\nin function (x/b)^a it is \'a\' attribute\nwhen a = 1 is linear function y = x/b")]
+		[SerializeField]
+		private float accelerationCurvePower = 0.2f;
+
+		[Header("Descending of speed values")]
+		[Tooltip(
+			"The amount of seconds whole initial deceleration takes. Possible values -> [0, inf]\nin function 1-(x/b)^a it is \'b\' attribute")]
+		[SerializeField]
+		private float decelerationTime = 0.5f;
+
+		[Tooltip(
+			"The amount of curvature of the function Possible values -> [0, inf]\nin function 1-(x/b)^a it is \'a\' attribute\nwhen a = 1 is linear function y = 1-(x/b)")]
+		[SerializeField]
+		private float decelerationCurvePower = 0.2f;
+
+
+		private float _currentAccelerationTime;
+		private float _currentDecelerationTime;
 		private float _yRotation;
 		private float _xRotation;
 		private Transform _camera;
 		private Transform _body;
 		private CharacterController _controller;
-		private float _currentSpeed;
 		private bool _isMovementPressed;
 		private Vector3 _normalizedMovement;
 		private Vector3 _smoothMovement;
@@ -38,9 +54,8 @@ namespace PlayerScripts
 
 		private void Start()
 		{
-			_currentSpeed = 0f;
-			_currentAscendingTime = 0f;
-			_currentDescendingTime = 0f;
+			_currentAccelerationTime = 0f;
+			_currentDecelerationTime = 0f;
 			_controller = GetComponent<CharacterController>();
 			_camera = GetComponentInChildren<Camera>().transform;
 			_body = transform;
@@ -53,36 +68,69 @@ namespace PlayerScripts
 
 		private void Update()
 		{
-			Move();
+			if (_isMovementPressed || !_smoothMovement.Equals(Vector3.zero))
+				Move();
 		}
+
+		// TODO: make frame indifferent
+		// private void UpdateFixed()
+		// {
+		// }
 
 		private void Move()
 		{
-			
 			CalculateMovementInputSmoothing();
-			_controller.Move(_smoothMovement * (speed * Time.deltaTime));
+			Vector3 result = _isMovementPressed
+				? SpeedGradualAcceleration(_smoothMovement)
+				: SpeedGradualDeceleration(_smoothMovement);
+			_controller.Move(result * (speed * Time.deltaTime));
+		}
+
+
+		private Vector3 SpeedGradualAcceleration(Vector3 velocity)
+		{
+			if (_currentAccelerationTime >= accelerationTime)
+				return velocity;
+			_currentAccelerationTime += Time.deltaTime;
+			velocity *= Mathf.Pow(_currentAccelerationTime / accelerationTime, accelerationCurvePower);
+			// TODO: Make a serializable field that controls what function is being used
+			// Also possible formulas (kx)/(kx+1-x) and (x+kx)/(kx+1) 
+			// Where k = (1-someVar)^3 <- k can have different function, just this way someVar can be small value
+			return velocity;
+		}
+
+		private Vector3 SpeedGradualDeceleration(Vector3 velocity)
+		{
+			if (_currentDecelerationTime >= decelerationTime)
+			{
+				_smoothMovement = Vector3.zero;
+				return Vector3.zero;
+			}
+
+			_currentDecelerationTime += Time.deltaTime;
+			velocity *= 1 - Mathf.Pow(_currentDecelerationTime / decelerationTime, decelerationCurvePower);
+			return velocity;
 		}
 
 
 		private void CalculateMovementInputSmoothing()
 		{
-        
-			_smoothMovement = Vector3.Lerp(_smoothMovement, _normalizedMovement, Time.deltaTime * movementSmoothing);
-
+			_smoothMovement = Vector3.Lerp(_smoothMovement, _normalizedMovement,
+				Time.deltaTime * inverseSmoothingMultiplier);
 		}
 
 		public void OnMoveStart(InputValue value)
-		{ 
+		{
 			var rawMovement = value.Get<Vector2>();
 			_normalizedMovement = (_body.right * rawMovement.x + _body.forward * rawMovement.y).normalized;
 			_isMovementPressed = true;
-			_currentDescendingTime = 0f;
+			_currentDecelerationTime = 0f;
 		}
 
 		public void OnMoveStop(InputValue value)
 		{
 			_isMovementPressed = false;
-			_currentAscendingTime = 0f;
+			_currentAccelerationTime = 0f;
 		}
 
 		public void OnLook(InputValue value)
