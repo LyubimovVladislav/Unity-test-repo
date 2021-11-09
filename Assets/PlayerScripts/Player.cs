@@ -17,7 +17,7 @@ namespace PlayerScripts
 		[Header("Keyboard Movement")] [SerializeField]
 		private float speed = 12f;
 
-		[SerializeField] private float inverseSmoothingMultiplier = 5f;
+		[Tooltip("Inversed i.e. less value -> more influence")] [SerializeField] private float smoothingMultiplierInverse = 5f;
 
 		[Header("Ascending of speed values")]
 		[Tooltip(
@@ -64,14 +64,15 @@ namespace PlayerScripts
 		private Vector3 _normalizedMovement;
 		private Vector3 _smoothMovement;
 		private Vector3 _downwardsVelocity;
-		private bool _isGrounded;
-		private bool _isJumping;
+
+		public bool IsGrounded { get; private set; }
+		public bool IsJumping { get; private set; }
 
 
 		private void Start()
 		{
-			_isJumping = false;
-			_isGrounded = false;
+			IsJumping = false;
+			IsGrounded = false;
 			_downwardsVelocity = Vector3.zero;
 			_currentAccelerationTime = 0f;
 			_currentDecelerationTime = 0f;
@@ -89,14 +90,14 @@ namespace PlayerScripts
 		{
 			if (_isMovementPressed || !_smoothMovement.Equals(Vector3.zero))
 				Move();
-			
-			_isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-			
+
+			IsGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
 			// TODO: refactor this 'if' statement code into ApplyGravity() or another method
 			// Level of abstraction does not match
-			if (_isGrounded && _downwardsVelocity.y < 0)
+			if (IsGrounded && _downwardsVelocity.y < 0)
 			{
-				_isJumping = false;
+				IsJumping = false;
 				_downwardsVelocity.y = 0;
 			}
 			else
@@ -151,7 +152,7 @@ namespace PlayerScripts
 		private void CalculateMovementInputSmoothing()
 		{
 			_smoothMovement = Vector3.Lerp(_smoothMovement, _normalizedMovement,
-				Time.deltaTime * inverseSmoothingMultiplier);
+				Time.deltaTime * smoothingMultiplierInverse);
 		}
 
 		public void OnMoveStart(InputValue value)
@@ -183,9 +184,9 @@ namespace PlayerScripts
 
 		public void OnJump(InputValue value)
 		{
-			if (!_isGrounded) return;
+			if (!IsGrounded) return;
 			_downwardsVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravitationalConstant);
-			_isJumping = true;
+			IsJumping = true;
 		}
 	}
 }
