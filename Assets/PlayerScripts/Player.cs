@@ -126,26 +126,34 @@ namespace PlayerScripts
 
 		private Vector3 SpeedGradualAcceleration(Vector3 velocity)
 		{
-			if (_currentAccelerationTime >= accelerationTime)
+			if (_currentAccelerationTime >= 1f/accelerationTime)
 				return velocity;
 			_currentAccelerationTime += Time.deltaTime;
-			velocity *= Mathf.Pow(_currentAccelerationTime / accelerationTime, accelerationCurvePower);
+			// velocity *= Mathf.Pow(_currentAccelerationTime / accelerationTime, accelerationCurvePower);
+
 			// TODO: Make a serializable field that controls what function is being used
 			// Also possible formulas (kx)/(kx+1-x) and (x+kx)/(kx+1) 
 			// Where k = (1-someVar)^3 <- k can have different function, just this way someVar can be small value
+
+			float k = (1 - accelerationCurvePower);
+			velocity *= ((k * _currentAccelerationTime) /
+			             (k * _currentAccelerationTime + 1 - accelerationTime * _currentAccelerationTime));
 			return velocity;
 		}
 
 		private Vector3 SpeedGradualDeceleration(Vector3 velocity)
 		{
-			if (_currentDecelerationTime >= decelerationTime)
+			if (_currentDecelerationTime >= 1f/decelerationTime)
 			{
 				_smoothMovement = Vector3.zero;
 				return Vector3.zero;
 			}
 
 			_currentDecelerationTime += Time.deltaTime;
-			velocity *= 1 - Mathf.Pow(_currentDecelerationTime / decelerationTime, decelerationCurvePower);
+			// velocity *= 1 - Mathf.Pow(_currentDecelerationTime / decelerationTime, decelerationCurvePower);
+			float k = (1 - decelerationCurvePower);
+			velocity *= 1 - ((k * _currentDecelerationTime) /
+			                 (k * _currentDecelerationTime + 1 - decelerationTime * _currentDecelerationTime));
 			return velocity;
 		}
 
@@ -159,17 +167,18 @@ namespace PlayerScripts
 		public void OnMoveStart(InputValue value)
 		{
 			// TODO:
-			// добавить скалярнрое? векторное? произведение с rawMovement,
+			// добавить скалярнрое произведение с rawMovement,
 			// если векторы будут противоположны <- -> то тогда надо выставить smothMovement = Vector3.zero
 			// типо гасим полностью сначала скорость(должно пофиксить эффект (наверное))
-			// посмотреть что даёт скалярое с нулевым вектором
 
 			var rawMovement = value.Get<Vector2>();
 			if (rawMovement == Vector2.zero)
 				return;
 			_normalizedMovement =
 				(_bodyPosition.right * rawMovement.x + _bodyPosition.forward * rawMovement.y).normalized;
-			Debug.Log(_normalizedMovement);
+			// if (Vector2.Dot(rawMovement, _smoothMovement) <0 && _smoothMovement.magnitude<0.5f)
+			// 	_smoothMovement = _normalizedMovement;
+			// чет хуйня идея
 			_isMovementPressed = true;
 			_currentDecelerationTime = 0f;
 		}
