@@ -1,3 +1,4 @@
+using System;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,8 +14,9 @@ namespace PlayerScripts
 		[Header("Mouse movement")] [SerializeField]
 		private float mouseSensitivity = 0.1f;
 
-		[Header("Keyboard Movement")] 
-		[SerializeField] private float speed = 12f;
+		[Header("Keyboard Movement")] [SerializeField]
+		private float speed = 12f;
+
 		[SerializeField] private float inverseSmoothingMultiplier = 5f;
 
 		[Header("Ascending of speed values")]
@@ -122,6 +124,8 @@ namespace PlayerScripts
 		public void OnMoveStart(InputValue value)
 		{
 			var rawMovement = value.Get<Vector2>();
+			if (rawMovement == Vector2.zero)
+				return;
 			_normalizedMovement = (_body.right * rawMovement.x + _body.forward * rawMovement.y).normalized;
 			_isMovementPressed = true;
 			_currentDecelerationTime = 0f;
